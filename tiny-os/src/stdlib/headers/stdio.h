@@ -1,6 +1,11 @@
-#ifndef __STDLIB_STDIO_HEADER__
-#define __STDLIB_STDIO_HEADER__
+#pragma once
 
-int 
+#include <stddef.h>
+#include <stdarg.h>
 
-#endif // __STDLIB_STDIO_HEADER__
+#include "string.h"
+#include "terminal.h"
+
+void middle_buff_terminal_print( const char* partial_str, size_t len, int force_print );
+
+int terminal_printf( const char * format, ... );

@@ -1,9 +1,10 @@
-#ifndef __STDLIB_STRING_HEADER__
-#define __STDLIB_STRING_HEADER__
+#pragma once
 
 #include <stddef.h>
 #include <stdint.h>
 
+size_t strlen( const char* str );
+
 void* memcpy( void* dest, const void* src, size_t num );
 
-#endif // __STDLIB_STRING_HEADER__
+void* memset ( void * ptr, int value, size_t num );
