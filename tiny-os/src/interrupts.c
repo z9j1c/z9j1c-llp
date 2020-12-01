@@ -1,6 +1,3 @@
-#include <stddef.h>
-#include <stdint.h>
-
 #include "interrupts.h"
 
 struct idt_entry {
