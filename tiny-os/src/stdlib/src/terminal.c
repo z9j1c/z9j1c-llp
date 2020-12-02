@@ -38,26 +38,30 @@ void terminal_putentryat(char c, uint8_t color, size_t x, size_t y) {
 
 void terminal_putchar_color(char c, uint8_t color) {
     switch (c) {
-    case '\n':
-        terminal_row++;
-        terminal_column = 0;
-        if (terminal_row == VGA_HEIGHT) {
-            terminal_row = VGA_HEIGHT - 1;
+    
+	case '\n':
+        if (terminal_row == VGA_HEIGHT - 1) {
 			terminal_scroll_line_up();
-        }
+		} else {
+			++terminal_row;
+		}
+
+		terminal_column = 0;
         break;
 
     default:
-        terminal_putentryat(c, color, terminal_column, terminal_row);
-        terminal_column++;
-        if (terminal_column == VGA_WIDTH) {
-            terminal_column = 0;
-            terminal_row++;
-            if (terminal_row == VGA_HEIGHT) {
-				terminal_row = VGA_HEIGHT - 1;
+		if (terminal_column == VGA_WIDTH) {
+			if (terminal_row != VGA_HEIGHT - 1) {
+				++terminal_row;
+			} else {
 				terminal_scroll_line_up();
-            }
-        }
+			}
+
+			terminal_column = 0;
+		}
+
+        terminal_putentryat(c, color, terminal_column, terminal_row);
+        ++terminal_column;
     }
 }
 
