@@ -54,6 +54,8 @@ void kernel_main(void) {
 
     apic_init(rsdt);
 
+    panic("Test panic msg after apic init\n");
+
     asm ("sti");
     // jump_userspace();
 }
