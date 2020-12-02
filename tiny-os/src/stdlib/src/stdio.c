@@ -33,6 +33,16 @@ void middle_buff_terminal_print( const char* partial_str, size_t len, int force_
 }
 
 int terminal_printf( const char* format, ... ) {   
+    va_list args;
+
+    va_start(args, format);
+    int symbols_printed_cnt = va_terminal_printf(format, args);
+    va_end(args);
+
+    return symbols_printed_cnt;
+}
+
+int va_terminal_printf( const char* format, va_list args ) {
     size_t format_len = strlen(format);
     size_t symbols_printed_cnt = 0;
 
@@ -44,10 +54,8 @@ int terminal_printf( const char* format, ... ) {
     
     int decimal_arg_delimiter = 10;
     int decimal_arg_copy = 0;
+    int str_arg_len = 0;
     // [-------------]
-
-    va_list args;
-    va_start(args, format);
 
     for (size_t sym_index = 0; sym_index < format_len; ++sym_index) {
         if ( format[sym_index] == '%' ) {
@@ -65,6 +73,7 @@ int terminal_printf( const char* format, ... ) {
                     if (decimal_arg < 0){
                         middle_buff_terminal_print("-", 1, 0);
                         decimal_arg *= -1;
+                        ++ symbols_printed_cnt;
                     }
 
                     decimal_arg_delimiter = 1;
@@ -73,6 +82,7 @@ int terminal_printf( const char* format, ... ) {
                     while (decimal_arg_copy != 0) {
                         decimal_arg_copy /= 10;
                         decimal_arg_delimiter *= 10;
+                        ++symbols_printed_cnt;
                     }
                     decimal_arg_delimiter /= 10;
 
@@ -89,29 +99,30 @@ int terminal_printf( const char* format, ... ) {
                 case 'c':
                     char_arg = va_arg(args, int);
                     middle_buff_terminal_print(&char_arg, 1, 0);
+                    ++symbols_printed_cnt;
                     break;
 
                 // String
                 case 's':
                     str_ptr_arg = va_arg(args, char*);
-                    middle_buff_terminal_print(str_ptr_arg, strlen(str_ptr_arg), 0);
+                    str_arg_len = strlen(str_ptr_arg);
+
+                    middle_buff_terminal_print(str_ptr_arg, str_arg_len, 0);
+                    symbols_printed_cnt += str_arg_len;
                     break;
             }
 
-            // TODO fix syms count
             // We passed through double-char specifier --> additional increment
             ++sym_index;
 
         } else {
             // TODO: batch print
             middle_buff_terminal_print(format + sym_index, 1, 0);
-            symbols_printed_cnt += 1;
+            ++symbols_printed_cnt;
         }
     }
 
     middle_buff_terminal_print(NULL, 0, 1); // "flush"
-
-    va_end(args);
 
     return symbols_printed_cnt;
 }
