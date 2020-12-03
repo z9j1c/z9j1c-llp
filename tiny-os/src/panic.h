@@ -6,6 +6,12 @@
 #include "stdlib/headers/terminal.h"
 #include "stdlib/headers/stdio.h"
 
+#define BUG_ON_REACH() panic("BUG occured at file " __FILE__ ", on line " (__LINE__) "\n");
+#define BUG_ON(e) if (e) { BUG_ON_REACH() }
+#define BUG_ON_NULL(e) if ((e) == NULL) { BUG_ON_REACH() }
+#define BUG_ON_ZERO(e) if ((e) == 0) { BUG_ON_REACH() }
+#define BUG_ON_NOT_ZERO(e) if ((e) != 0) { BUG_ON_REACH() }
+
 // Is necessary for dealing with NMI
 static int panic_state_flag;
 
