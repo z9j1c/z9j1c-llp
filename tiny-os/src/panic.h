@@ -9,6 +9,8 @@
 // Is necessary for dealing with NMI
 static int panic_state_flag;
 
+struct PANIC_REFS_SET;
+
 // Panic version if we got NMI ==> just go out
 // Yeah, the idea is stolen from linux src 
 void nmi_panic( const char* format, ... );
@@ -18,7 +20,7 @@ void nmi_panic( const char* format, ... );
 void panic( const char* format, ... );
 
 // Print panic messages: can be called from various panic variants
-void panic_print( const char* format, va_list args );
+void panic_print( const struct PANIC_REFS_SET* regs, const char* format, va_list args );
 
 // Disable all interrupts except NMI
 void disable_irq();
