@@ -29,6 +29,7 @@ void middle_buff_terminal_print( const char* partial_str, size_t len, int force_
     // "Flush"
     if ( force_print ) {
         terminal_write(middle_buf, middle_buf_index, VGA_COLOR_WHITE);
+        middle_buf_index = 0;
     }
 }
 
