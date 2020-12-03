@@ -74,26 +74,10 @@ int va_terminal_printf( const char* format, va_list args ) {
                     if (decimal_arg < 0){
                         middle_buff_terminal_print("-", 1, 0);
                         decimal_arg *= -1;
-                        ++ symbols_printed_cnt;
-                    }
-
-                    decimal_arg_delimiter = 1;
-                    decimal_arg_copy = decimal_arg;
-
-                    while (decimal_arg_copy != 0) {
-                        decimal_arg_copy /= 10;
-                        decimal_arg_delimiter *= 10;
                         ++symbols_printed_cnt;
                     }
-                    decimal_arg_delimiter /= 10;
 
-                    while (decimal_arg != 0) {
-                        char_arg = decimal_arg / decimal_arg_delimiter + '0';
-                        decimal_arg %= decimal_arg_delimiter;
-                        decimal_arg_delimiter /= 10;
-
-                        middle_buff_terminal_print(&char_arg, 1, 0);
-                    }
+                    symbols_printed_cnt += terminal_num_print(decimal_arg, 10);
                     break;
 
                 // Char
@@ -111,6 +95,18 @@ int va_terminal_printf( const char* format, va_list args ) {
                     middle_buff_terminal_print(str_ptr_arg, str_arg_len, 0);
                     symbols_printed_cnt += str_arg_len;
                     break;
+
+                case 'x':
+                    symbols_printed_cnt += 2;
+                    middle_buff_terminal_print("0x", 2, 0);
+                    decimal_arg = va_arg(args, int);
+                    symbols_printed_cnt += terminal_num_print(decimal_arg, 16);
+                    break;
+
+                case 'o':
+                    decimal_arg = va_arg(args, int);
+                    symbols_printed_cnt += terminal_num_print(decimal_arg, 8);
+                    break;
             }
 
             // We passed through double-char specifier --> additional increment
@@ -124,6 +120,39 @@ int va_terminal_printf( const char* format, va_list args ) {
     }
 
     middle_buff_terminal_print(NULL, 0, 1); // "flush"
+
+    return symbols_printed_cnt;
+}
+
+static int terminal_num_print( int value, int base ) {
+    int symbols_printed_cnt = 0;
+    int delimiter = 1;
+    int value_copy = value;
+    char char_repr = '\0';
+
+    while (value_copy != 0) {
+        delimiter *= base;
+        value_copy /= base;
+        ++symbols_printed_cnt;
+    }
+    delimiter /= base;
+
+    while (value != 0) {
+        int digit = value / delimiter;
+        
+        if (digit > 9) {
+            char_repr = 'A';
+            digit -= 10;
+        } else {
+            char_repr = '0';
+        }
+
+        char_repr += digit;
+
+        middle_buff_terminal_print(&char_repr, 1, 0);
+        value %= delimiter;
+        delimiter /= base;
+    }
 
     return symbols_printed_cnt;
 }
