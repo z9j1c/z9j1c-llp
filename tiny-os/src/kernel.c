@@ -47,11 +47,11 @@ void kernel_main(void) {
 
 	terminal_initialize();
     terminal_writestring_color("HeLL OS is loaded.\n", vga_entry_color(VGA_COLOR_GREEN, VGA_COLOR_BLACK));
-    struct acpi_sdt* rsdt = acpi_find_rsdt();
+    
+    struct acpi_sdt* rsdt = acpi_find_and_validate_rsdt();
     if (!rsdt) {
         panic("RSDT not found!");
     }
-
     apic_init(rsdt);
 
     panic("Test panic msg after apic init\n");
