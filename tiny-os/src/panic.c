@@ -25,8 +25,6 @@ void disable_irq() {
 
 void panic( const char* format, ... ) {
     static struct PANIC_REFS_SET panic_registers;
-
-    // TODO: add two power format into printf and print registers
     asm("movl %%eax,%0" : "=r"(panic_registers.eax));
     asm("movl %%ebx,%0" : "=r"(panic_registers.ebx));
     asm("movl %%ecx,%0" : "=r"(panic_registers.ecx));
@@ -60,8 +58,6 @@ void panic( const char* format, ... ) {
 
 void nmi_panic( const char* format, ... ) {
     static struct PANIC_REFS_SET panic_registers;
-
-    // TODO: add two power format into printf and print registers
     asm("movl %%eax,%0" : "=r"(panic_registers.eax));
     asm("movl %%ebx,%0" : "=r"(panic_registers.ebx));
     asm("movl %%ecx,%0" : "=r"(panic_registers.ecx));
