@@ -2,6 +2,8 @@
 
 #include <stddef.h>
 #include <stdarg.h>
+#include <stdint.h>
+#include <sys/types.h>
 
 #include "string.h"
 #include "terminal.h"
@@ -15,4 +17,4 @@ int terminal_printf( const char * format, ... );
 
 // Pass number representation into middle_buff_terminal_print()
 // Max base is 16
-static int terminal_num_print( int value, int base );
+static int terminal_num_print( uint64_t value, uint64_t base, uint8_t upper_case_flag );

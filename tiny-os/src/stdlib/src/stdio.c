@@ -1,4 +1,6 @@
 #include "../headers/stdio.h"
+#include <stdint.h>
+#include <sys/types.h>
 
 enum vga_color stdio_current_color;
 
@@ -33,7 +35,7 @@ void middle_buff_terminal_print( const char* partial_str, size_t len, int force_
     }
 }
 
-int terminal_printf( const char* format, ... ) {   
+int terminal_printf( const char* format, ... ) {
     va_list args;
 
     va_start(args, format);
@@ -50,6 +52,8 @@ int va_terminal_printf( const char* format, va_list args ) {
     // Variables needed for specifiers dealing
     // [-------------]
     int decimal_arg = 0;
+    size_t size_t_decimal = 0;
+    uint32_t uint32_t_decimal = 0;
     char* str_ptr_arg = NULL;
     char char_arg = '\0';
     
@@ -67,6 +71,10 @@ int va_terminal_printf( const char* format, va_list args ) {
             }
 
             switch (format[sym_index + 1]) {
+                case '%':
+                    middle_buff_terminal_print("%", 1, 0);
+                    break;
+                
                 // Decimal
                 case 'd':
                     decimal_arg = va_arg(args, int);
@@ -77,7 +85,7 @@ int va_terminal_printf( const char* format, va_list args ) {
                         ++symbols_printed_cnt;
                     }
 
-                    symbols_printed_cnt += terminal_num_print(decimal_arg, 10);
+                    symbols_printed_cnt += terminal_num_print((uint64_t)decimal_arg, 10, 0);
                     break;
 
                 // Char
@@ -96,16 +104,40 @@ int va_terminal_printf( const char* format, va_list args ) {
                     symbols_printed_cnt += str_arg_len;
                     break;
 
+                // hex integer
                 case 'x':
                     symbols_printed_cnt += 2;
                     middle_buff_terminal_print("0x", 2, 0);
                     decimal_arg = va_arg(args, int);
-                    symbols_printed_cnt += terminal_num_print(decimal_arg, 16);
+                    symbols_printed_cnt += terminal_num_print((uint64_t)decimal_arg, 16, 0);
                     break;
 
+                // HEX integer
+                case 'X':
+                    symbols_printed_cnt += 2;
+                    middle_buff_terminal_print("0x", 2, 0);
+                    decimal_arg = va_arg(args, int);
+                    symbols_printed_cnt += terminal_num_print((uint64_t)decimal_arg, 16, 1);
+                    break;
+
+                // uint32_t HEX
+                case 'H':
+                    symbols_printed_cnt += 2;
+                    middle_buff_terminal_print("0x", 2, 0);
+                    uint32_t_decimal = va_arg(args, uint32_t);
+                    symbols_printed_cnt += terminal_num_print((uint64_t)uint32_t_decimal, 16, 1);
+                    break;
+
+                // Oct integer
                 case 'o':
                     decimal_arg = va_arg(args, int);
-                    symbols_printed_cnt += terminal_num_print(decimal_arg, 8);
+                    symbols_printed_cnt += terminal_num_print((uint64_t)decimal_arg, 8, 0);
+                    break;
+
+                // size_t
+                case 'z':
+                    size_t_decimal = va_arg(args, size_t);
+                    symbols_printed_cnt += terminal_num_print((uint64_t)size_t_decimal, 10, 0);
                     break;
             }
 
@@ -113,7 +145,6 @@ int va_terminal_printf( const char* format, va_list args ) {
             ++sym_index;
 
         } else {
-            // TODO: batch print
             middle_buff_terminal_print(format + sym_index, 1, 0);
             ++symbols_printed_cnt;
         }
@@ -124,12 +155,18 @@ int va_terminal_printf( const char* format, va_list args ) {
     return symbols_printed_cnt;
 }
 
-static int terminal_num_print( int value, int base ) {
+static int terminal_num_print( uint64_t value, uint64_t base, uint8_t upper_case_flag ) {
+    if (value == 0) {
+        middle_buff_terminal_print("0", 1, 0);
+        return 1;
+    }
+    
     int symbols_printed_cnt = 0;
-    int delimiter = 1;
-    int value_copy = value;
+    uint64_t delimiter = 1;
+    uint64_t value_copy = value;
     char char_repr = '\0';
 
+    // Count digits count and overlapped 10 power
     while (value_copy != 0) {
         delimiter *= base;
         value_copy /= base;
@@ -137,17 +174,24 @@ static int terminal_num_print( int value, int base ) {
     }
     delimiter /= base;
 
-    while (value != 0) {
-        int digit = value / delimiter;
+    // Setup correct start letter to switch between '%x' and '%X'
+    char start_letter = 'a';
+    if (upper_case_flag) {
+        start_letter = 'A';
+    }
+
+    // Pass through all digits
+    while (delimiter != 0) {
+        int digit_shift = value / delimiter;
         
-        if (digit > 9) {
-            char_repr = 'A';
-            digit -= 10;
+        if (digit_shift > 9) {
+            char_repr = start_letter;
+            digit_shift -= 10;
         } else {
             char_repr = '0';
         }
 
-        char_repr += digit;
+        char_repr += digit_shift;
 
         middle_buff_terminal_print(&char_repr, 1, 0);
         value %= delimiter;
