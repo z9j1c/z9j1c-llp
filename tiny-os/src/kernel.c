@@ -7,9 +7,11 @@
 #include "acpi.h"
 #include "apic.h"
 #include "panic.h"
+#include "memory.h"
 #include "spinlock.h"
 #include "stdlib/headers/string.h"
 #include "stdlib/headers/terminal.h"
+#include "multiboot.h"
 
 
 __attribute__ ((interrupt)) void syscall_entry(struct iframe* frame) {
@@ -41,12 +43,12 @@ __attribute__ ((interrupt)) void keyboard_isr(struct iframe* frame) {
 
 extern void jump_userspace();
 
-void kernel_main(void) {
+void kernel_main(multiboot_info_t* multiboot_info, unsigned int magic) {
     init_gdt();
     init_idt();
 
 	terminal_initialize();
-    terminal_writestring_color("HeLL OS is loaded.\n", vga_entry_color(VGA_COLOR_GREEN, VGA_COLOR_BLACK));
+    print_mapped_mem(multiboot_info);
     
     struct acpi_sdt* rsdt = acpi_find_and_validate_rsdt();
     if (!rsdt) {
@@ -54,6 +56,7 @@ void kernel_main(void) {
     }
     apic_init(rsdt);
 
+    terminal_writestring_color("HeLL OS is loaded.\n", vga_entry_color(VGA_COLOR_GREEN, VGA_COLOR_BLACK));
     panic("Test panic msg after apic init\n");
 
     asm ("sti");
