@@ -38,9 +38,25 @@ __attribute__ ((interrupt)) void spurious_isr(struct iframe* frame) {
     apic_eoi();
 }
 
+// Idea from https://wiki.osdev.org/8259_PIC
+static void PIC_remap() {
+    outb(PIC1_COMMAND, 0x11);
+    outb(PIC2_COMMAND, 0x11);
+    outb(PIC1_DATA, 0x20);
+    outb(PIC2_DATA, 40);
+    outb(PIC1_DATA, 0x04);
+    outb(PIC2_DATA, 0x02);
+    outb(PIC1_DATA, 0x01);
+    outb(PIC2_DATA, 0x01);
+    outb(PIC1_DATA, 0x0);
+    outb(PIC2_DATA, 0x0);
+}
+
 void init_idt() {
     IDTPTR.limit = sizeof(IDT) - 1;
     IDTPTR.base = (uint32_t)&IDT;
+
+    PIC_remap();
 
     // For flags param see https://wiki.osdev.org/IDT#Structure_IA-32.
     for (size_t i = 0; i < 256; i++) {

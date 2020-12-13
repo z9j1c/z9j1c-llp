@@ -12,6 +12,7 @@
 #include "stdlib/headers/string.h"
 #include "stdlib/headers/terminal.h"
 #include "multiboot.h"
+#include "timer.h"
 
 
 __attribute__ ((interrupt)) void syscall_entry(struct iframe* frame) {
@@ -19,24 +20,12 @@ __attribute__ ((interrupt)) void syscall_entry(struct iframe* frame) {
     (void)frame;
 }
 
-static int lock = 0;
-
-__attribute__ ((interrupt)) void timer_isr(struct iframe* frame) {
-    (void)frame;
-
-    spin_lock(&lock);
-    terminal_writestring_color(".", vga_entry_color(VGA_COLOR_LIGHT_BLUE, VGA_COLOR_BLACK));
-    spin_unlock(&lock);
-
-    apic_eoi();
-}
-
 __attribute__ ((interrupt)) void keyboard_isr(struct iframe* frame) {
     (void)frame;
 
-    spin_lock(&lock);
+    kernel_lock();
     terminal_writestring_color(".", vga_entry_color(VGA_COLOR_RED, VGA_COLOR_GREEN));
-    spin_unlock(&lock);
+    kernel_unlock();
 
     apic_eoi();
 }
@@ -48,6 +37,7 @@ void kernel_main(multiboot_info_t* multiboot_info, unsigned int magic) {
     init_idt();
 
 	terminal_initialize();
+    asm volatile ("sti");
     print_mapped_mem(multiboot_info);
     
     struct acpi_sdt* rsdt = acpi_find_and_validate_rsdt();
@@ -55,10 +45,4 @@ void kernel_main(multiboot_info_t* multiboot_info, unsigned int magic) {
         panic("RSDT not found!");
     }
     apic_init(rsdt);
-
-    terminal_writestring_color("HeLL OS is loaded.\n", vga_entry_color(VGA_COLOR_GREEN, VGA_COLOR_BLACK));
-    panic("Test panic msg after apic init\n");
-
-    asm ("sti");
-    // jump_userspace();
 }

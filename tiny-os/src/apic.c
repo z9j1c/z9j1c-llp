@@ -1,4 +1,5 @@
 #include "apic.h"
+#include <stdint.h>
 
 #define TYPE_LAPIC          0
 #define TYPE_IOAPIC         1
@@ -70,10 +71,6 @@ static uint32_t lapic_read(size_t idx) {
 #define TMR_PERIODIC     0x20000
 #define TMR_BASEDIV      (1<<20)
 
-static inline void outb(uint16_t port, uint8_t data) {
-  asm volatile("out %0,%1" : : "a" (data), "d" (port));
-}
-
 #define IOAPIC_REG_TABLE  0x10
 
 static void ioapic_write(int reg, uint32_t data) {
@@ -84,6 +81,35 @@ static void ioapic_write(int reg, uint32_t data) {
 static void ioapic_enable(int irq, int target_irq) {
     ioapic_write(IOAPIC_REG_TABLE + 2 * irq, target_irq);
     ioapic_write(IOAPIC_REG_TABLE + 2 * irq + 1, 0);
+}
+
+uint32_t apic_cnt_timer_ticks_1ms(uint32_t lapic_ptr) {
+    // C-code example from https://wiki.osdev.org/APIC_timer    
+    lapic_write(APIC_TMRDIV, 0x3);
+    lapic_write(APIC_TMRINITCNT, 0xFFFFFFFF);
+
+    pit_sleep(1);
+    return (0xFFFFFFFF - lapic_read(APIC_TMRCURRCNT)) / 1000;
+}
+
+static void turn_on_apic_timer(uint32_t apic_timer_1ms_ticks) {
+    lapic_write(APIC_SPURIOUS, 39 | APIC_SW_ENABLE);
+
+    lapic_write(APIC_LVT_PERF, APIC_DISABLE);
+    lapic_write(APIC_LVT_LINT0, APIC_DISABLE);
+    lapic_write(APIC_LVT_LINT1, APIC_DISABLE);
+
+    lapic_write(APIC_EOI, 0);
+
+    lapic_write(APIC_TASKPRIOR, 0);
+
+    lapic_write(APIC_TMRDIV, 0x3);
+    lapic_write(APIC_LVT_TMR, 32 | TMR_PERIODIC);
+    lapic_write(APIC_TMRINITCNT, apic_timer_1ms_ticks);
+    
+    switch_on_apic_irq0();
+
+    ioapic_enable(1, 40);
 }
 
 void apic_init(struct acpi_sdt* rsdt) {
@@ -122,27 +148,17 @@ void apic_init(struct acpi_sdt* rsdt) {
         panic("cannot locate Local APIC address");
     }
 
+    // Count ticks in 1ms according to PIT
+    set_pit_low_mode();
+    uint32_t apic_timer_1ms_ticks = apic_cnt_timer_ticks_1ms(lapic_ptr);
+
     // Disable old PIC.
     outb(0x20 + 1, 0xFF);
     outb(0xA0 + 1, 0xFF);
 
-    lapic_write(APIC_SPURIOUS, 39 | APIC_SW_ENABLE);
+    turn_on_apic_timer(apic_timer_1ms_ticks);
 
-    lapic_write(APIC_LVT_PERF, APIC_DISABLE);
-    lapic_write(APIC_LVT_LINT0, APIC_DISABLE);
-    lapic_write(APIC_LVT_LINT1, APIC_DISABLE);
-
-    lapic_write(APIC_EOI, 0);
-
-    lapic_write(APIC_TASKPRIOR, 0);
-
-    lapic_write(APIC_TMRDIV, 0xB);
-    lapic_write(APIC_LVT_TMR, 32 | TMR_PERIODIC);
-    lapic_write(APIC_TMRINITCNT, 10000000);
-
-    ioapic_enable(1, 40);
-
-    terminal_writestring("APIC is initialized\n");
+    terminal_writestring("\nAPIC and APIC TIMER are initialized\n");
 }
 
 void apic_eoi() {

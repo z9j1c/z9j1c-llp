@@ -1,8 +1,9 @@
-static inline void spin_lock(int *p) {
-    while(!__sync_bool_compare_and_swap(p, 0, 1));
-}
+#pragma once
 
-static inline void spin_unlock(int volatile *p) {
-    asm volatile ("":::"memory");
-    *p = 0;
-}
+inline void spin_lock(int *p);
+
+inline void spin_unlock(int volatile *p);
+
+void kernel_lock();
+
+void kernel_unlock();

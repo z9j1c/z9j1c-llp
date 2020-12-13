@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include "stdlib/headers/string.h"
 #include "panic.h"
+#include "timer.h"
+#include "stdlib/headers/stdio.h"
 
 struct acpi_sdt_header {
     char signature[4];
