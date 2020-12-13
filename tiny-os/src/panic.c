@@ -1,8 +1,6 @@
 #include "panic.h"
 #include "stdlib/headers/terminal.h"
 
-static int panic_state_flag = 0;
-
 struct PANIC_REFS_SET {
     intptr_t eax;
     intptr_t ebx;
