@@ -1,4 +1,5 @@
 #include "idt.h"
+#include "ps2_keyboard.h"
 
 struct idt_entry {
     uint16_t base_lo;

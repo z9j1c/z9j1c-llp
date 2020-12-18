@@ -13,21 +13,11 @@
 #include "stdlib/headers/terminal.h"
 #include "multiboot.h"
 #include "timer.h"
-
+#include "ps2_keyboard.h"
 
 __attribute__ ((interrupt)) void syscall_entry(struct iframe* frame) {
     terminal_writestring_color("Syscall!\n", vga_entry_color(VGA_COLOR_RED, VGA_COLOR_BLACK));
     (void)frame;
-}
-
-__attribute__ ((interrupt)) void keyboard_isr(struct iframe* frame) {
-    (void)frame;
-
-    kernel_lock();
-    terminal_writestring_color(".", vga_entry_color(VGA_COLOR_RED, VGA_COLOR_GREEN));
-    kernel_unlock();
-
-    apic_eoi();
 }
 
 extern void jump_userspace();
