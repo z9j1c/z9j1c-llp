@@ -21,10 +21,11 @@ stack_top:
 .type _start, @function
 _start:
 	mov $stack_top, %esp
+	push %eax # Multiboot info
+	push %ebx # Multiboot 'magic'
 
 	call kernel_main
 
-	cli
 1:	hlt
 	jmp 1b
 
